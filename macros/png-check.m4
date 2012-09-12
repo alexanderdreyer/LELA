@@ -6,36 +6,17 @@ dnl Test for the libpng and define PNG_CFLAGS, PNG_LIBS, and HAVE_LIBPNG
 
 AC_DEFUN([LB_CHECK_PNG],
 [
-PNG_LIBS=
-PNG_CFLAGS=
+# This is because the first PKG_CHECK_MODULES call is inside a conditional.
+PKG_PROG_PKG_CONFIG
 
-AC_ARG_WITH(png,[
-   --with-png= <path>|yes Enable use of PNG library.
-],[
-if test "$withval" = yes ; then
-    AC_CHECK_LIB([png], [png_create_write_struct_2], [
-        AC_DEFINE(HAVE_LIBPNG,1,Enable use of libpng)
-    	PNG_LIBS="-lpng"
-    ])
-elif test "$withval" != no ; then
-    BACKUP_LIBS=$LIBS
-    LIBS=$withval/lib
-    AC_CHECK_LIB([png], [png_create_write_struct_2],[
-            AC_DEFINE(HAVE_LIBPNG,1,Enable use of libpng)
-	    PNG_CFLAGS="-I$withval/include -lpng"
-	    PNG_LIBS="-L$withval/lib -lpng"
-    ],[
-	    AC_MSG_WARN([Could not find libpng in path $withval, disabling])
-    ])
-    LIBS=$BACKUP_LIBS
-fi
-],[
-    AC_CHECK_LIB([png], [png_create_write_struct_2], [
-    	AC_DEFINE(HAVE_LIBPNG,1,Enable use of libpng)
-    	PNG_LIBS="-lpng"
-    ],[AC_MSG_RESULT(not found)])
-])
-
-AC_SUBST(PNG_CFLAGS)
-AC_SUBST(PNG_LIBS)
+AC_ARG_WITH([png],
+  [AS_HELP_STRING([--with-png],
+    [support handling png files @<:@default=check@:>@])],
+  [],
+  [with_png=check])
+AS_CASE(["$with_png"],
+  [yes], [PKG_CHECK_MODULES([PNG], [libpng], [HAVE_LIBPNG=1])],
+  [no], [],
+  [PKG_CHECK_MODULES([PNG], [libpng], [HAVE_LIBPNG=1], [HAVE_LIBPNG=0])])
+AM_CONDITIONAL([USE_LIBPNG], [test "$with_png" != no -a "$HAVE_LIBPNG" -eq 1])
 ])
